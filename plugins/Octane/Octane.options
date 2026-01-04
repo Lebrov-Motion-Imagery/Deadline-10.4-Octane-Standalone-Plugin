@@ -1,0 +1,235 @@
+[SceneFile]
+Type=filename
+Label=Scene File
+Category=Octane Options
+Index=0
+Description=The scene filename as it exists on the network.
+Required=false
+DisableIfBlank=true
+
+[Version]
+Type=label
+Label=Version
+Category=Octane Options
+Index=1
+Description=The version of Octane to use to render.
+Required=false
+DisableIfBlank=true
+
+[OutputFolder]
+Type=folder
+Label=Output Folder
+Category=Octane Options
+Index=2
+Description=The output folder.
+Required=false
+DisableIfBlank=false
+
+[FramePerFileMode]
+Type=boolean
+Label=Enable "Single Frame per OCS File" Mode
+Category=Octane Options
+Index=3
+Description=Enable this mode if you have an animation with one frame per OCS file. Select just one file from the sequence.
+Required=false
+DisableIfBlank=true
+
+[FilenameTemplate]
+Type=string
+Label=Filename Template
+Category=Octane Options
+Index=4
+Description=Template parameters: %i render target index, %n render target node name, %e file extension, %t timestamp, %f frame number, %F frame number prefixed with 0s, %s sub frame number, %p render pass name
+Required=false
+DisableIfBlank=false
+DefaultValue=
+
+[FileFormat]
+Type=enum
+Values=png8;png16;exr;exrtonemapped;PNG_8;PNG_16;EXR_16;EXR_32;TIFF_8;TIFF_16;JPEG;PNG (8-bit);PNG (16-bit);EXR (16-bit) Untonemapped;EXR (16-bit) Tonemapped;EXR (32-bit) Untonemapped;EXR (32-bit) Tonemapped
+Label=File Format
+Category=Octane Options
+Index=5
+Description=Choose the output file format. For Octane 2020+ use: PNG_8, PNG_16, EXR_16, EXR_32, TIFF_8, TIFF_16, JPEG. For older versions use: png8, png16, exr, exrtonemapped.
+Required=false
+DisableIfBlank=false
+
+[OverrideSampling]
+Type=Integer
+Label=Override Sampling Level
+Category=Octane Options
+Index=6
+Description=Specify a value greater than 0 to override the sampling level used for rendering.
+Required=false
+DisableIfBlank=false
+DefaultValue=0
+
+[RenderTargetOCS]
+Type=enum
+Label=Render Target
+Category=Octane Options
+Index=7
+Description=Choose which render target to use in the drop-down list.
+Required=false
+DisableIfBlank=true
+
+[RenderTargetORBX]
+Type=string
+Label=Render Target
+Category=Octane Options
+Index=8
+Description=Specify which render target to use.
+Required=false
+DisableIfBlank=true
+
+[AdditionalArgs]
+Type=string
+Label=Additional Arguments
+Category=Octane Options
+Index=9
+Description=Additional command line arguments that are sent to Octane.
+Required=false
+DisableIfBlank=false
+DefaultValue=
+
+[ExrCompressionType]
+Type=enum
+Values=Uncompressed;RLE (lossless);ZIPS (lossless);ZIP (lossless);PIZ (lossless);PXR24 (lossy);B44 (lossy);B44A (lossy);DWAA (lossy);DWAB (lossy)
+Label=EXR Compression Type
+Category=Output Settings
+Index=10
+Description=The compression type to use when saving EXR files.
+Required=false
+DisableIfBlank=false
+DefaultValue=ZIP (lossless)
+
+[ExrCompressionLevel]
+Type=Integer
+Label=EXR Compression Level (DWA)
+Category=Output Settings
+Index=11
+Description=Compression level for DWAA/DWAB compression (1-100). Only applies when using DWA compression.
+Required=false
+DisableIfBlank=false
+DefaultValue=45
+
+[JpegQuality]
+Type=Integer
+Label=JPEG Quality
+Category=Output Settings
+Index=12
+Description=Quality level for JPEG output (1-100).
+Required=false
+DisableIfBlank=false
+DefaultValue=75
+
+[SkipExisting]
+Type=boolean
+Label=Skip Existing Files
+Category=Output Settings
+Index=13
+Description=Skip rendering frames that already exist in the output folder.
+Required=false
+DisableIfBlank=false
+DefaultValue=false
+
+[SaveAllPasses]
+Type=boolean
+Label=Save All Render Passes
+Category=Output Settings
+Index=14
+Description=Save all enabled render passes instead of just the beauty pass.
+Required=false
+DisableIfBlank=false
+DefaultValue=false
+
+[SaveLayeredEXRBox]
+Type=boolean
+Label=Save Layered EXR
+Category=Output Settings
+Index=15
+Description=Save render passes as a multi-layer EXR file (only when saving as EXR format).
+Required=false
+DisableIfBlank=false
+DefaultValue=false
+
+[SaveDeepImage]
+Type=boolean
+Label=Save Deep Image
+Category=Output Settings
+Index=16
+Description=Save additional deep image output (requires deep image output enabled in kernel).
+Required=false
+DisableIfBlank=false
+DefaultValue=false
+
+[GenerateCompositeProjectFile]
+Type=boolean
+Label=Generate Composite Project File
+Category=Output Settings
+Index=17
+Description=Generate a composite project file for Photoshop.
+Required=false
+DisableIfBlank=false
+DefaultValue=false
+
+[SaveDenoisedMainPass]
+Type=boolean
+Label=Save Denoised Main Pass
+Category=Output Settings
+Index=18
+Description=Save denoiser output as main pass if denoising is enabled.
+Required=false
+DisableIfBlank=false
+DefaultValue=false
+
+[PremultipliedAlpha]
+Type=boolean
+Label=Premultiplied Alpha
+Category=Output Settings (2020+)
+Index=19
+Description=Use premultiplied alpha when saving EXR or TIFF files. (Octane 2020+ only)
+Required=false
+DisableIfBlank=false
+DefaultValue=true
+
+[ColorSpace]
+Type=enum
+Values=SRGB;LINEAR_SRGB;ACES2065_1;ACESCG;OCIO
+Label=Color Space
+Category=Output Settings (2020+)
+Index=20
+Description=Output color space for rendered images. (Octane 2020+ only)
+Required=false
+DisableIfBlank=false
+DefaultValue=LINEAR_SRGB
+
+[OcioColorSpaceName]
+Type=string
+Label=OCIO Color Space Name
+Category=Output Settings (2020+)
+Index=21
+Description=The name of the OCIO color space to use (only when Color Space is set to OCIO).
+Required=false
+DisableIfBlank=false
+DefaultValue=
+
+[OcioLookName]
+Type=string
+Label=OCIO Look Name
+Category=Output Settings (2020+)
+Index=22
+Description=The name of the OCIO look to apply (only when Color Space is set to OCIO).
+Required=false
+DisableIfBlank=false
+DefaultValue=
+
+[ForceToneMapping]
+Type=boolean
+Label=Force Tone Mapping
+Category=Output Settings (2020+)
+Index=23
+Description=Force tone mapping to be applied even for linear color spaces. (Octane 2020+ only)
+Required=false
+DisableIfBlank=false
+DefaultValue=false

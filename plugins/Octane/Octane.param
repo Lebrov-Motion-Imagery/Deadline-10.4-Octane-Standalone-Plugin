@@ -1,0 +1,41 @@
+[About]
+Type=label
+Label=About
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=Octane Plugin for Deadline
+Description=Not configurable
+
+[ConcurrentTasks]
+Type=label
+Label=ConcurrentTasks
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=True
+Description=Not configurable
+
+[Octane_RenderExecutable4]
+Type=multilinemultifilename
+Label=Octane 4 Executable
+Category=Render Executables
+CategoryOrder=0
+Default=C:\Program Files\OTOY\OctaneRender 4.05\octane.exe;/Applications/OctaneRender 4.05.app/Contents/MacOS/octane
+Description=The path to the Octane 4 executable file used for rendering. Enter alternative paths on separate lines.
+
+[Octane_RenderExecutable2019]
+Type=multilinemultifilename
+Label=Octane 2019 Executable
+Category=Render Executables
+CategoryOrder=0
+Default=C:\Program Files\OTOY\OctaneRender Enterprise 2019.1.5\octane.exe;/Applications/OctaneRender Enterprise 2019.1.5.app/Contents/MacOS/octane
+Description=The path to the Octane 2019 executable file used for rendering. Enter alternative paths on separate lines.
+
+[Octane_RenderExecutable2026]
+Type=multilinemultifilename
+Label=Octane 2026 Executable
+Category=Render Executables
+CategoryOrder=0
+Default=C:\Program Files\OTOY\OctaneRender Enterprise 2026.1\octane.exe;/Applications/OctaneRender Enterprise 2026.1.app/Contents/MacOS/octane
+Description=The path to the Octane 2026 executable file used for rendering. Enter alternative paths on separate lines.
