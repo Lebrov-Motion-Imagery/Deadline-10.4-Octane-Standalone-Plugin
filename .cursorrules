@@ -1,0 +1,69 @@
+# Deadline Octane Standalone Plugin - Cursor Rules
+
+## Project Overview
+This is an AWS Thinkbox Deadline 10.4 render plugin for Octane Standalone. It enables farm rendering of Octane scenes (.ocs, .orbx files) with full control over output settings.
+
+## Architecture
+
+### Plugin Files (`plugins/Octane/`)
+- `Octane.py` - Main Python plugin class, handles process execution and stdout parsing
+- `Octane.options` - UI configuration for Deadline Monitor (dropdowns, checkboxes, text fields)
+- `Octane.param` - System configuration (executable paths per version)
+- `DeadlineOctane*.lua` - Lua render scripts executed by Octane Standalone
+
+### Submission Script (`scripts/Submission/`)
+- `OctaneSubmission.py` - Deadline submission dialog, creates job/plugin info files
+
+## Coding Conventions
+
+### Lua (Octane Scripts)
+- Use `octane.*` namespace for all Octane API calls
+- Prefer `octane.render.saveRenderPasses3()` over deprecated `saveRenderPasses()`
+- Use `log(msg)` function with `io.stdout:flush()` for Deadline worker visibility
+- Access render callback stats via `result.samples` and `result.maxSamples`
+- Color space uses `PROPS_RENDER_COLOR_SPACE_INFO` structure
+- Image format uses `octane.imageSaveFormat.*` enums
+
+### Python (Deadline Plugin)
+- Inherit from `DeadlinePlugin` class
+- Use `self.GetPluginInfoEntry()` / `self.GetPluginInfoEntryWithDefault()` for job params
+- Register stdout handlers with `self.AddStdoutHandlerCallback(regex)`
+- Update progress with `self.SetProgress(percentage)` and `self.SetStatusMessage(text)`
+- Log with `self.LogInfo()`, `self.LogWarning()`, `self.LogError()`
+
+### Options File (.options)
+- Use `[SectionName]` for UI groupings
+- Types: `string`, `integer`, `float`, `boolean`, `enum`, `filename`, `folder`
+- Labels appear in Deadline Monitor UI
+
+### Param File (.param)
+- System-level configuration (not per-job)
+- Executable paths follow pattern: `Octane_RenderExecutable{VERSION}`
+
+## Supported Versions
+- Octane 4 (legacy)
+- Octane 2019 (uses Octane 4 script)
+- Octane 2026 (uses DeadlineOctane2026.1.lua)
+
+## Testing Workflow
+1. Submit test job from Deadline Monitor
+2. Check worker log for stdout output
+3. Verify progress bar updates in Monitor
+4. Check rendered output files
+
+## Common Patterns
+
+### Adding New Render Option
+1. Add entry to `Octane.options` with UI definition
+2. Read value in `Octane.py` via `GetPluginInfoEntry()`
+3. Pass to Lua script as command-line argument
+4. Parse in Lua script and apply to render settings
+
+### Updating for New Octane Version
+1. Create new `DeadlineOctane{VERSION}.lua` based on latest
+2. Add executable path to `Octane.param`
+3. Add version to dropdown in `Octane.options`
+4. Update version dispatch in `Octane.py`
+
+
+

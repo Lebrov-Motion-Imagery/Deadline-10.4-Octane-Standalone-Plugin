@@ -1,0 +1,29 @@
+# Temp files
+*.tmp
+*.temp
+*~
+
+# IDE configs
+.vscode/
+.idea/
+
+# Resilio Sync
+*.rsls
+*.rslsz
+*.!sync
+.sync/
+.SyncArchive/
+.SyncID
+.SyncIgnore
+.SyncTrash/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Temp announcement
+discord_announcement.txt
+
+# Documentation (reference only, not for distribution)
+plugins/Octane/Docs/
+

@@ -311,7 +311,7 @@ class OctanePlugin(DeadlinePlugin):
             # "sceneGraph": "nil",
             "fileFormat": self.GetPluginInfoEntryWithDefault("FileFormat", "EXR (16-bit) Untonemapped"),
             ## absolute path to the output directory of the rendered images
-            "outputDirectory": str(self.GetPluginInfoEntryWithDefault("OutputFolder", "")),
+            "outputDirectory": output_folder,
             ## max samples/px
             "maxSamples": self.GetIntegerPluginInfoEntryWithDefault("OverrideSampling", 0),
             ## filename template for the output files
@@ -412,7 +412,7 @@ class OctanePlugin(DeadlinePlugin):
             "fileFormat": file_format,
             "imageSaveFormat": file_format,
             ## absolute path to the output directory of the rendered images
-            "outputDirectory": str(self.GetPluginInfoEntryWithDefault("OutputFolder", "")),
+            "outputDirectory": output_folder,
             ## max samples/px
             "maxSamples": self.GetIntegerPluginInfoEntryWithDefault("OverrideSampling", 0),
             ## filename template for the output files
