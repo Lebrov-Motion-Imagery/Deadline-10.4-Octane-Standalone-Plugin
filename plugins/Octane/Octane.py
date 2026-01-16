@@ -349,6 +349,15 @@ class OctanePlugin(DeadlinePlugin):
                     val = str(val).lower()
                 the_file.write('{key}{delimiter}{val}\n'.format(key=key, delimiter=delimiter, val=val))
 
+        # Apply Deadline path mapping to any paths written into the Lua args file.
+        # This ensures output directories are mapped on the worker.
+        try:
+            RepositoryUtils.CheckPathMappingInFileAndReplace(
+                octane_lua_args_filename, octane_lua_args_filename, [], []
+            )
+        except Exception as e:
+            self.LogWarning("Failed to apply path mapping to Lua args file: {0}".format(e))
+
         render_args = [
             '-q',
             '--script', lua_script,
@@ -463,6 +472,15 @@ class OctanePlugin(DeadlinePlugin):
                     # Lua expects bools to be lowercase
                     val = str(val).lower()
                 the_file.write('{key}{delimiter}{val}\n'.format(key=key, delimiter=delimiter, val=val))
+
+        # Apply Deadline path mapping to any paths written into the Lua args file.
+        # This ensures output directories are mapped on the worker.
+        try:
+            RepositoryUtils.CheckPathMappingInFileAndReplace(
+                octane_lua_args_filename, octane_lua_args_filename, [], []
+            )
+        except Exception as e:
+            self.LogWarning("Failed to apply path mapping to Lua args file: {0}".format(e))
 
         render_args = [
             '-q',
