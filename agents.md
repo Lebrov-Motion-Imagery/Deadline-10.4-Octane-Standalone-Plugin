@@ -95,5 +95,35 @@ octane.render.saveRenderPassesMultiExr3(renderTarget, filename, imageSettings)
 3. Update `octane.*` calls to new API
 4. Add version to options/param/submission files
 
+## Release Rules
+
+### Naming Conventions
+- Tag and zip name: `Deadline-10.4_Octane-2026.1_vX.Y`
+- Release title: `Deadline 10.4 Octane 2026.1 vX.Y`
+- Bump `X.Y` for every public release
+
+### Zip Contents
+- Include only: `plugins/`, `scripts/`, `LICENSE`, `README.md`
+- Preserve folder hierarchy exactly as in the repo
+- Exclude `Docs/`, `discord_announcement.txt`, and any local files
+
+### Publish & Description
+1. Create git tag and push tag + commit.
+2. Create GitHub release with the zip attached.
+3. Use this note format:
+   ```
+   ## Octane Standalone Plugin for AWS Deadline 10.4
+
+   ### Changes
+   - <short, user-facing bullets>
+
+   ### Tested With
+   - AWS Thinkbox Deadline 10.4
+   - Octane Standalone 2026.1
+
+   ### Installation
+   Copy contents of \plugins\ and \scripts\ to your Deadline Repository.
+   ```
+
 
 
