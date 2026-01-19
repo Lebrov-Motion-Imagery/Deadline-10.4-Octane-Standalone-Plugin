@@ -212,7 +212,16 @@ class OctanePlugin(DeadlinePlugin):
         if platform.system() == 'Windows':
             return subprocess.list2cmdline(cmdline)
         else:
-            return " ".join(quote(arg) for arg in cmdline)
+            def quote_arg(arg):
+                if arg == "":
+                    return '""'
+                needs_quotes = any(ch.isspace() for ch in arg) or '"' in arg
+                if not needs_quotes:
+                    return arg
+                escaped = arg.replace("\\", "\\\\").replace('"', '\\"')
+                return '"' + escaped + '"'
+
+            return " ".join(quote_arg(arg) for arg in cmdline)
 
     def RenderArgument(self):
         """
