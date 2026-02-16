@@ -96,30 +96,47 @@ local gSettings =
     ocioLookName            = "",
     -- force tone mapping
     forceToneMapping        = false,
+    -- optional render target name to render (blank means use default behavior)
+    selectedRenderTarget    = "",
 }
 
 -- Track last reported progress to avoid spamming the log
 local lastReportedProgress = -1
 
+local function trimString(value)
+    if type(value) ~= "string" then
+        return value
+    end
+    return value:gsub("^%s+", ""):gsub("%s+$", "")
+end
+
 -- Callback function for render progress reporting
 -- The callback receives a result table with: samples, maxSamples, renderTime, samplesSec, etc.
 local function createRenderCallback()
     return function(result)
-        if gSettings.cancelled then
-            octane.render.callbackStop()
-            return
-        end
-        
-        -- result.samples = current samples rendered
-        -- result.maxSamples = target max samples
-        if result and result.maxSamples and result.maxSamples > 0 and result.samples then
-            local progress = (result.samples / result.maxSamples) * 100
-            -- Only report progress every 5% to avoid log spam
-            local progressStep = math.floor(progress / 5) * 5
-            if progressStep > lastReportedProgress then
-                lastReportedProgress = progressStep
-                log(string.format("Samples: %d/%d (%.1f%%)", result.samples, result.maxSamples, progress))
+        local callbackOk, callbackErr = pcall(function()
+            if gSettings.cancelled then
+                octane.render.callbackStop()
+                return
             end
+
+            -- result.samples = current samples rendered
+            -- result.maxSamples = target max samples
+            local currentSamples = result and tonumber(result.samples) or nil
+            local maxSamples = result and tonumber(result.maxSamples) or nil
+            if currentSamples and maxSamples and maxSamples > 0 then
+                local progress = (currentSamples / maxSamples) * 100
+                -- Only report progress every 5% to avoid log spam
+                local progressStep = math.floor(progress / 5) * 5
+                if progressStep > lastReportedProgress then
+                    lastReportedProgress = progressStep
+                    log(string.format("Samples: %.0f/%.0f (%.1f%%)", currentSamples, maxSamples, progress))
+                end
+            end
+        end)
+        if not callbackOk then
+            -- Never let callback formatting/type issues terminate rendering.
+            log("Warning: render callback failed: " .. tostring(callbackErr))
         end
     end
 end
@@ -389,6 +406,32 @@ local function saveDeepImage(template, renderTargetIx, frameIx, subFrameIx, name
 end
 
 
+local function runRenderWithLogging(renderTargetNode, frameIx, subFrameIx, modeName)
+    local targetName = renderTargetNode and renderTargetNode.name or "<nil>"
+    log(string.format(
+        "Render start begin: frame=%d subFrame=%d target=%s mode=%s",
+        frameIx, subFrameIx, tostring(targetName), tostring(modeName)))
+
+    local renderOk, renderErr = pcall(function()
+        octane.render.start
+        {
+            renderTargetNode = renderTargetNode,
+            callback = createRenderCallback()
+        }
+    end)
+
+    if not renderOk then
+        error(string.format(
+            "render.start failed for target '%s' at frame %d subFrame %d (%s): %s",
+            tostring(targetName), frameIx, subFrameIx, tostring(modeName), tostring(renderErr)))
+    end
+
+    log(string.format(
+        "Render start end: frame=%d subFrame=%d target=%s mode=%s",
+        frameIx, subFrameIx, tostring(targetName), tostring(modeName)))
+end
+
+
 -- The batch rendering function. This will render each frame for each selected render target.
 gSettings.batchRender = function()
     -- Interactive render region should not be active when running batch render script.
@@ -474,6 +517,7 @@ gSettings.batchRender = function()
                             renderTarget.node.name,
                             renderTarget.imageSaveFormat,
                             "all")
+                        local path
                         if gSettings.outputDirectory then
                             path = octane.file.join(gSettings.outputDirectory, filename)
                         else
@@ -486,11 +530,7 @@ gSettings.batchRender = function()
 
                         -- do the rendering of the image
                         if not skipFrame then
-                            octane.render.start
-                            { 
-                                renderTargetNode = renderTarget.node,
-                                callback = createRenderCallback()
-                            }
+                            runRenderWithLogging(renderTarget.node, frameIx, subFrameIx, "multiLayerExr")
                         end
 
                         -- cancelled -> bail out and update progress bar
@@ -501,6 +541,9 @@ gSettings.batchRender = function()
 
                         -- save out the multi layer EXR using the new API
                         if gSettings.outputDirectory and path and not skipFrame then
+                            log(string.format(
+                                "Save begin: frame=%d subFrame=%d target=%s mode=multiLayerExr path=%s",
+                                frameIx, subFrameIx, tostring(renderTarget.node.name), tostring(path)))
                             log("Saving multi-layer EXR to: " .. path)
                             local useHalf = renderTarget.imageSaveFormat == octane.imageSaveFormat.EXR_16
                             log("  useHalf (EXR_16): " .. tostring(useHalf))
@@ -525,7 +568,7 @@ gSettings.batchRender = function()
                                 log("  WARNING: exportSettings is nil!")
                             end
                             
-                            local saveSuccess, saveError = pcall(function()
+                            local saveSuccess, saveResultOrError = pcall(function()
                                 return octane.render.saveRenderPassesMultiExr3(
                                     path, nil,
                                     useHalf,
@@ -535,15 +578,18 @@ gSettings.batchRender = function()
                             end)
                             
                             if not saveSuccess then
-                                log("ERROR saving EXR: " .. tostring(saveError))
-                                error("failed to save render passes in multi-layer EXR: " .. tostring(saveError))
+                                log("ERROR saving EXR: " .. tostring(saveResultOrError))
+                                error("failed to save render passes in multi-layer EXR: " .. tostring(saveResultOrError))
                             end
                             
-                            if saveError == false then
+                            if saveResultOrError == false then
                                 log("WARNING: saveRenderPassesMultiExr3 returned false")
                             end
                             
                             log("  Successfully saved EXR")
+                            log(string.format(
+                                "Save end: frame=%d subFrame=%d target=%s mode=multiLayerExr",
+                                frameIx, subFrameIx, tostring(renderTarget.node.name)))
 
                             -- optionally save out the deep image
                             local ok = saveDeepImage(gSettings.template, renderTargetIx, frameIx,
@@ -585,11 +631,7 @@ gSettings.batchRender = function()
 
                         -- do the rendering of the image
                         if not skipFrame then
-                            octane.render.start
-                            { 
-                                renderTargetNode = renderTarget.node,
-                                callback = createRenderCallback()
-                            }
+                            runRenderWithLogging(renderTarget.node, frameIx, subFrameIx, "discretePasses")
                         end
 
                         -- cancelled -> bail out and update progress bar
@@ -600,19 +642,31 @@ gSettings.batchRender = function()
 
                         -- save out the passes as discrete files using the new API
                         if gSettings.outputDirectory and path and not skipFrame then
+                            log(string.format(
+                                "Save begin: frame=%d subFrame=%d target=%s mode=discretePasses path=%s",
+                                frameIx, subFrameIx, tostring(renderTarget.node.name), tostring(path)))
                             local premultipliedAlphaType
                             if octaneRenderUtils.supportsPremultipliedAlpha(renderTarget.imageSaveFormat) and gSettings.premultipliedAlpha then
                                 premultipliedAlphaType = octane.premultipliedAlphaType.LINEARIZED
                             else
                                 premultipliedAlphaType = octane.premultipliedAlphaType.NONE
                             end
-                            local ok = octane.render.saveRenderPasses3(path, renderPassExportObjs,
-                                    renderTarget.imageSaveFormat, buildColorSpaceInfo(renderTarget),
-                                    premultipliedAlphaType, getImageExportSettings(renderTarget),
-                                    false, nil)
+                            local saveOk, saveResultOrError = pcall(function()
+                                return octane.render.saveRenderPasses3(path, renderPassExportObjs,
+                                        renderTarget.imageSaveFormat, buildColorSpaceInfo(renderTarget),
+                                        premultipliedAlphaType, getImageExportSettings(renderTarget),
+                                        false, nil)
+                            end)
+                            if not saveOk then
+                                error("failed to save render passes to discrete files: " .. tostring(saveResultOrError))
+                            end
+                            local ok = saveResultOrError
                             if not ok then
                                 error("failed to save render passes to discrete files")
                             end
+                            log(string.format(
+                                "Save end: frame=%d subFrame=%d target=%s mode=discretePasses",
+                                frameIx, subFrameIx, tostring(renderTarget.node.name)))
 
                             -- optionally save out the deep image
                             ok = saveDeepImage(gSettings.template, renderTargetIx, frameIx,
@@ -653,11 +707,7 @@ gSettings.batchRender = function()
                                       and octane.file.exists(path)
                     -- do the rendering of the image
                     if not skipFrame then
-                        octane.render.start
-                        { 
-                            renderTargetNode = renderTarget.node,
-                            callback = createRenderCallback()
-                        }
+                        runRenderWithLogging(renderTarget.node, frameIx, subFrameIx, "beautyPass")
                     end
 
                     -- cancelled -> bail out and update progress bar
@@ -668,18 +718,30 @@ gSettings.batchRender = function()
 
                     -- save out the image using the new API
                     if gSettings.outputDirectory and path and not skipFrame then
+                        log(string.format(
+                            "Save begin: frame=%d subFrame=%d target=%s mode=beautyPass path=%s",
+                            frameIx, subFrameIx, tostring(renderTarget.node.name), tostring(path)))
                         local premultipliedAlphaType
                         if octaneRenderUtils.supportsPremultipliedAlpha(renderTarget.imageSaveFormat) and gSettings.premultipliedAlpha then
                             premultipliedAlphaType = octane.premultipliedAlphaType.LINEARIZED
                         else
                             premultipliedAlphaType = octane.premultipliedAlphaType.NONE
                         end
-                        local ok = octane.render.saveRenderPass3(renderPassId, path,
-                                renderTarget.imageSaveFormat, buildColorSpaceInfo(renderTarget),
-                                premultipliedAlphaType, getImageExportSettings(renderTarget), false)
+                        local saveOk, saveResultOrError = pcall(function()
+                            return octane.render.saveRenderPass3(renderPassId, path,
+                                    renderTarget.imageSaveFormat, buildColorSpaceInfo(renderTarget),
+                                    premultipliedAlphaType, getImageExportSettings(renderTarget), false)
+                        end)
+                        if not saveOk then
+                            error("failed to save image: " .. tostring(saveResultOrError))
+                        end
+                        local ok = saveResultOrError
                         if not ok then
                             error("failed to save image")
                         end
+                        log(string.format(
+                            "Save end: frame=%d subFrame=%d target=%s mode=beautyPass",
+                            frameIx, subFrameIx, tostring(renderTarget.node.name)))
 
                         -- optionally save out the deep image
                         ok = saveDeepImage(gSettings.template, renderTargetIx, frameIx,
@@ -758,6 +820,32 @@ for _, node in ipairs(renderTargetNodes) do
         forceToneMapping   = gSettings.forceToneMapping or false,
     }
     table.insert(gSettings.renderTargets, state)
+end
+
+-- Optional target filtering from Deadline plugin info.
+-- This is used for both OCS and ORBX workflows and avoids reliance on CLI -t behavior.
+local requestedRenderTarget = trimString(gSettings.selectedRenderTarget or "")
+if requestedRenderTarget ~= "" then
+    local matched = false
+    local availableTargets = {}
+    for _, state in ipairs(gSettings.renderTargets) do
+        table.insert(availableTargets, state.node.name)
+        if state.node.name == requestedRenderTarget then
+            state.render = true
+            matched = true
+        else
+            state.render = false
+        end
+    end
+
+    if not matched then
+        error(string.format(
+            "Requested render target '%s' was not found. Available targets: %s",
+            requestedRenderTarget,
+            table.concat(availableTargets, ", ")))
+    end
+
+    log("Selected render target: " .. requestedRenderTarget)
 end
 
 log("Starting batch render with Octane 2026.1 API")

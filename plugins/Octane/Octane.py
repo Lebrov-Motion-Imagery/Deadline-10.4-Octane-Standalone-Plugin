@@ -271,6 +271,7 @@ class OctanePlugin(DeadlinePlugin):
             render_target = render_target_ocs
         elif render_target_orbx:
             render_target = render_target_orbx
+        render_target = render_target.strip()
 
         render_args = [
             '-q',
@@ -401,6 +402,7 @@ class OctanePlugin(DeadlinePlugin):
             render_target = render_target_ocs
         elif render_target_orbx:
             render_target = render_target_orbx
+        render_target = render_target.strip()
 
         # Map old file format names to new format names for 2026.1 API
         file_format = self.GetPluginInfoEntryWithDefault("FileFormat", "EXR_16")
@@ -467,6 +469,8 @@ class OctanePlugin(DeadlinePlugin):
             "ocioLookName": self.GetPluginInfoEntryWithDefault("OcioLookName", ""),
             ## force tone mapping
             "forceToneMapping": self.GetBooleanPluginInfoEntryWithDefault("ForceToneMapping", force_tone_mapping),
+            ## optional render target to select in the Lua script
+            "selectedRenderTarget": render_target,
         }
 
         octane_lua_args_filename = os.path.join(self.GetPluginDirectory(), "octane_lua_args.txt")
@@ -500,9 +504,6 @@ class OctanePlugin(DeadlinePlugin):
         sample = self.GetIntegerPluginInfoEntryWithDefault("OverrideSampling", 0)
         if sample > 0:
             render_args.extend(['-s', str(sample)])
-
-        if render_target:
-            render_args.extend(['-t', render_target])
         return render_args
 
     def get_script_render_arguments(self):
